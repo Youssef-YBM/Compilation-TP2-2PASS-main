@@ -1,0 +1,14 @@
+# depslib dependency file v1.0
+1604544681 source:c:\users\lenovo\desktop\2nd ilisi\compilation\tp2\2passes_tp_a_lexical_ikram\main.c
+	<stdio.h>
+	<stdlib.h>
+	<ctype.h>
+	"parser.h"
+
+1604547770 c:\users\lenovo\desktop\2nd ilisi\compilation\tp2\2passes_tp_a_lexical_ikram\parser.h
+	<stdio.h>
+	<stdlib.h>
+
+1604972534 source:c:\users\lenovo\desktop\2nd ilisi\compilation\tp2\2passes_tp_a_lexical_ikram\parser.c
+	"parser.h"
+

@@ -1,0 +1,40 @@
+# depslib dependency file v1.0
+1604543609 source:c:\users\lenovo\desktop\tp_tp_tp\main.c
+	<stdio.h>
+	<stdlib.h>
+	<ctype.h>
+	"parser.h"
+
+1604543895 c:\users\lenovo\desktop\tp_tp_tp\parser.h
+	<stdio.h>
+	<stdlib.h>
+
+1604543859 source:c:\users\lenovo\desktop\tp_tp_tp\parser.c
+	"parser.h"
+
+1604544681 source:c:\users\lenovo\desktop\tp_a_lexical\main.c
+	<stdio.h>
+	<stdlib.h>
+	<ctype.h>
+	"parser.h"
+
+1604547770 c:\users\lenovo\desktop\tp_a_lexical\parser.h
+	<stdio.h>
+	<stdlib.h>
+
+1604561642 source:c:\users\lenovo\desktop\tp_a_lexical\parser.c
+	"parser.h"
+
+1604544681 source:c:\users\lenovo\desktop\2passes_tp_a_lexical\main.c
+	<stdio.h>
+	<stdlib.h>
+	<ctype.h>
+	"parser.h"
+
+1604547770 c:\users\lenovo\desktop\2passes_tp_a_lexical\parser.h
+	<stdio.h>
+	<stdlib.h>
+
+1604972534 source:c:\users\lenovo\desktop\2passes_tp_a_lexical\parser.c
+	"parser.h"
+

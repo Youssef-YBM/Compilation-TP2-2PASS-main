@@ -1,0 +1,795 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+bin/
+  Debug/
+    TP_TP_TP.exe
+obj/
+  Debug/
+    main.o
+    parser.o
+input.txt
+main.c
+parser.c
+parser.h
+sortie_analyseur.txt
+TP_TP_TP.depend
+TP_TP_TP.layout
+TP.cbp
+TP.depend
+TP.layout
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="input.txt">
+BEGIN
+WRITE (var1 ,(5+13.7), )#;
+READ 'var1);
+V1 = 5e-2 + (120 - 56
+WRITE( (hello) , , , );
+var :=  ;
+READ (a,b, , );
+write((1+2)-7,:=,9);
+write(++,a+b);
+read(a,b;
+read(a,,,b)
+write(:=,1+2);
+var;
+var:=6:=9;
+END
+</file>
+
+<file path="main.c">
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include "parser.h"
+#define MAX 50
+
+
+
+/** Declarer une variable global afin de savoir la ligne de l'erreur**/
+   int ligneid=1;
+
+   int newline=0;
+
+/**Declaration du token buffer **/
+typedef struct
+{
+    char token_tab[MAX];
+    int indice;
+}token_buffer ;
+
+  /**declaration d'un buffer comme var globale **/
+  token_buffer buffer;
+
+  /** Fonction pour vider le buffer **/
+  void clear_buffer()
+  {
+      buffer.indice=0;
+  }
+  /** Fonction pour placer un caracter dans le tab buffer**/
+   void buffer_char(int car)
+  {
+    char c;
+    c =(char)car;
+    buffer.token_tab[buffer.indice]=c;
+    buffer.token_tab[buffer.indice+1]='\0';
+    buffer.indice++;
+  }
+
+  void to_maj()
+{
+	for (int i = 0; i < buffer.indice; i++)
+		if ((buffer.token_tab[i] <= 'z') && (buffer.token_tab[i] >= 'a'))
+			buffer.token_tab[i] = 'A' + buffer.token_tab[i] - 'a';
+}
+
+  /** Fonction pour s'assurer que le mot lu n'est pas un mot reservé **/
+    token check_reserved()
+   {
+     to_maj();
+    if(!strcmp(buffer.token_tab,"BEGIN")) return BEGIN;
+    if(!strcmp(buffer.token_tab,"END")) return END;
+    if(!strcmp(buffer.token_tab,"READ")) return READ;
+    if(!strcmp(buffer.token_tab,"WRITE")) return WRITE;
+    return ID;
+   }
+
+  /** Fonction qui affiche dans la console l erreur et sa ligne**/
+  void  lexical_error(int sym)
+    {
+      printf("Erreur a la ligne %d caractere inconnu %c\n",ligneid ,sym);
+    }
+
+
+
+    void exposant(FILE* myFile, char* c)
+{
+    buffer_char(c);
+    (*c) = fgetc(myFile);
+    if ((!isdigit(*c)) && (*c != '+') && (*c != '-'))
+        ungetc(*c, myFile);
+    else
+    {
+        if ((*c == '+') || (*c == '-'))
+        {
+            buffer_char(*c);
+            (*c) = fgetc(myFile);
+        }
+        if (isdigit(*c))
+            read_number(myFile, c);
+        //for example : when we have e+a to get a back into the file
+        else
+            ungetc(*c, myFile);
+    }
+}
+
+void read_number(FILE* myFile, char* c)
+{
+    for ((*c) = fgetc(myFile); isdigit(*c); (*c) = fgetc(myFile))
+        buffer_char(*c);
+    ungetc(*c, myFile);
+}
+
+
+token scanner(FILE *inputFile)
+{
+  int in_char, c=0; ;
+  clear_buffer();
+  if(feof(inputFile)) return SCANEOF;
+
+  while ((in_char = fgetc(inputFile)) != EOF)
+  {
+    if(in_char == '\n')
+    {
+        ligneid++;
+        if(!newline) continue ;
+        newline=0;
+        return -1;
+    }
+    if (isspace(in_char))  continue;
+    if (isalpha(in_char))
+    {
+      /*ID ::= LETTER | ID LETTER
+      *               | ID DIGIT
+      *               | ID UNDERSCORE
+      */
+      buffer_char(in_char);
+      for (c = fgetc(inputFile); isalnum(c) || c == '_'; c =fgetc(inputFile))
+        buffer_char(c);
+      ungetc(c, inputFile );
+      return check_reserved();
+    }
+     else if (isdigit(in_char))
+        {
+            /* INTLITERAL ::= DIGIT
+            *               | INTLITERAL DIGIT
+            */
+            buffer_char(in_char);
+            read_number(inputFile, &c);
+            if (c == '.')
+            {
+                c = fgetc(inputFile);
+                read_number(inputFile, &c);
+                if ((c != 'e') && (c != 'E'))
+                    return FLOATLITERAL;
+            }
+            if ((c == 'e') || (c == 'E'))
+            {
+                //fgetc to read the next char after the 'e'/'E'
+                c = fgetc(inputFile);
+                exposant(inputFile, &c);
+                return FLOATLITERAL;
+            }
+            return INTLITERAL;
+        }
+        else if (in_char == '.')
+        {
+            c = fgetc(inputFile);
+            if (isdigit(c))
+            {
+                read_number(inputFile, &c);
+                if ((c == 'e') || (c == 'E'))
+                {
+                    c = fgetc(inputFile);
+                    exposant(inputFile, &c);
+                }
+                return FLOATLITERAL;
+            }
+            else
+            {
+                ungetc(c, inputFile);
+                lexical_error('.');
+            }
+        }
+    else if (in_char == '(')
+      return LPAREN;
+    else if (in_char == ')')
+      return RPAREN;
+    else if (in_char == ';')
+      return SEMICOLON;
+    else if (in_char == ',')
+      return COMMA;
+    else if (in_char == '+')
+      return PLUSOP;
+    else if (in_char == ':') {
+      /* look for ":=" */
+      c = fgetc(inputFile);
+      if (c == '=') return ASSIGNOP;
+      else
+      {
+        ungetc(c,inputFile);
+        lexical_error(in_char);
+      }
+    }
+    else if (in_char == '-')
+    {
+      /* is it -- , comment start */
+      c = fgetc(inputFile);
+      if (c == '-')
+      {
+
+        do in_char = fgetc(inputFile);
+        while(in_char != '\n');
+        ligneid++;
+      }
+      else
+      {
+        ungetc(c,inputFile);
+        return MINUSOP;
+      }
+    }
+    else
+      lexical_error(in_char);
+  }/* while */
+  return SCANEOF;
+}/* scanner() */
+
+void analyseurlex()
+{
+    FILE* myFile=NULL;
+    FILE* output =NULL;
+	int i;
+	myFile=fopen("input.txt", "r");
+	output=fopen("sortie_analyseur.txt", "w");
+
+	if (!myFile  || !output)
+	{
+		printf("Error! Could not read one or more files\n");
+		exit(-1);
+	}
+
+    while (strcmp(tokens[i = scanner(myFile)], "SCANEOF"))
+    {
+       if(i>=0)
+       { fprintf(output, "%s ", tokens[i]);
+         newline=1; }
+       else fprintf(output,"%c",'\n');
+    }
+       fprintf(output,"%s",tokens[13]);
+    fclose(output);
+    fclose(myFile);
+
+}
+
+int main()
+{
+    analyseurlex();
+    printf("Fin analyseur lexical\n");
+    system_goal();
+
+    return 0;
+}
+</file>
+
+<file path="parser.c">
+#include"parser.h"
+FILE* output =NULL;
+token courant;
+int nb=1;
+char c;
+
+char tokens[15][13] = { "BEGIN", "END", "READ", "WRITE", "ID", "INTLITERAL",
+								"LPAREN", "RPAREN", "SEMICOLON", "COMMA", "ASSIGNOP",
+								"PLUSOP", "MINUSOP", "SCANEOF","FLOATLITERAL"};
+
+void system_goal()
+{
+  /* (system goal>, ::= <program> SCANEOF */
+    output=fopen("sortie_analyseur.txt","r");
+    if(!output)
+    {
+        printf("ERREUR D'OUVERTURE !!!!");
+        exit(-1);
+    }
+    program();
+    match(SCANEOF);
+    fclose(output);
+}
+
+void program()
+{
+  /*<program>  ::= begin <inst - list> end */
+  courant=next_token();
+  match(BEGIN);
+  inst_list();
+  match(END);
+}
+
+void match(token t)
+{
+   token to=courant;
+   if(to==t)
+   {
+      //printf("MATCH \n");
+      courant=next_token();
+   }
+   else
+   {
+      printf("Found %s ",tokens[to]);
+      syntax_error(t);
+     //courant=next_token();
+   }
+}
+
+token next_token()
+{
+  char a;
+  char *token_name=NULL;
+  token_name=(char*)malloc(20*sizeof(char));
+  fscanf(output,"%s%c%c",token_name,&a,&c);
+  if(c!='\n') ungetc(c,output);
+  else nb++;
+  if(!strcmp(token_name,"BEGIN"))
+        return BEGIN;
+    if(!strcmp(token_name,"END"))
+        return END;
+    if(!strcmp(token_name,"READ"))
+        return READ;
+    if(!strcmp(token_name,"WRITE"))
+        return WRITE;
+    if(!strcmp(token_name,"ID"))
+        return ID;
+    if(!strcmp(token_name,"INTLITERAL"))
+        return INTLITERAL;
+    if(!strcmp(token_name,"LPAREN"))
+        return LPAREN;
+    if(!strcmp(token_name,"RPAREN"))
+        return RPAREN;
+    if(!strcmp(token_name,"SEMICOLON"))
+        return SEMICOLON;
+    if(!strcmp(token_name,"COMMA"))
+        return COMMA;
+    if(!strcmp(token_name,"ASSIGNOP"))
+        return ASSIGNOP;
+    if(!strcmp(token_name,"PLUSOP"))
+        return PLUSOP;
+    if(!strcmp(token_name,"MINUSOP"))
+        return MINUSOP;
+    if(!strcmp(token_name,"SCANEOF"))
+        return SCANEOF;
+    if(!strcmp(token_name,"FLOATLITERAL"))
+        return FLOATLITERAL;
+    return 15;
+}
+
+void syntax_error(token t)
+{
+    int temp;
+    if(c=='\n' ) temp=nb-1 ;
+    else temp=nb;
+    switch(t)
+    {
+        case -1: printf("Expression manquante ou erreur de syntaxe ligne %d\n",temp);break;
+        default : printf("Excpected %s ligne %d\n",tokens[t],temp);
+    }
+}
+
+void inst_list()
+{
+  /* <inst-list> ::= <inst> { <inst> } */
+  inst();
+  while (1)
+  {
+    switch(courant)
+    {
+      case ID:
+      case READ:
+      case WRITE:
+        inst();
+        break;
+      case END:
+      case SCANEOF: return;
+      default:
+          syntax_error(-1);
+          courant=next_token();
+          break;
+    }
+  }
+}
+
+void inst()
+{
+  token tok = courant;
+  //To put END back into the file
+  switch (tok)
+  {
+    case ID:
+      /* <inst> ::= ID := <expr> ; */
+      match(ID);
+      match(ASSIGNOP);
+      expression();
+      match(SEMICOLON);
+      break;
+    case READ:
+      /* x <inst> :: = READ(<id list>); */
+      match(READ);
+      match(LPAREN);
+      id_list();
+      match(RPAREN);
+      match(SEMICOLON);
+      break;
+    case WRITE:
+      /*(inst > ::= WRITE(<expr list>); */
+      match(WRITE);
+      match(LPAREN);
+      expr_list();
+      match(RPAREN);
+      match(SEMICOLON);
+      break;
+    default:
+      printf("found unexpected %s ",tokens[tok]);
+      syntax_error(-1);
+      break;
+  }
+}
+
+void prim()
+{
+  token tok = courant;
+   switch (tok)
+  {
+    case LPAREN:
+      /* <prim> ::= ( expr> ) */
+      match(LPAREN);
+      expression();
+      match(RPAREN);
+      break;
+    case ID:
+      /* <prim> ::= ID */
+      match(ID);
+      break;
+    case INTLITERAL:
+      /* <prim> ::= INTLITERAL */
+      match(INTLITERAL);
+      break;
+    case FLOATLITERAL :
+        match(FLOATLITERAL);
+        break;
+     case END: return;
+     case SCANEOF : printf("Found %s",tokens[courant]);break;
+    default:
+       while(courant!=RPAREN&& courant!=COMMA && courant!=READ)
+      {
+        if(courant==END || courant==SCANEOF)
+        {
+            printf("Found unexpected %s ",tokens[courant]);break;
+        }
+        printf("Found %s " , tokens[courant]);
+        syntax_error(-1);
+        if(courant==SEMICOLON) break;
+        else courant=next_token();
+      }
+      break;
+  }
+
+}
+
+void id_list()
+{
+  /* <id_list> ::= ID { , ID } */
+  //match(ID);
+  int contin=1;
+    while(contin)
+    {
+        switch(courant)
+        {
+            case ID : match(ID); contin=0; break;
+            case COMMA: syntax_error(4); contin=0;break;
+            case RPAREN :syntax_error(4); contin=0 ; break;
+            case END:return;
+            case SCANEOF : printf("Found %s",tokens[courant]); contin=0;break;
+            default:
+               printf("Found %s",tokens[courant]);
+               courant=next_token();
+        }
+    }
+  while (courant == COMMA)
+  {
+    match(COMMA);
+       if(courant!=ID)
+         {
+             if(courant==COMMA || courant==RPAREN)
+                syntax_error(4);
+            else
+             {
+                 printf("FOUND %s ",tokens[courant]);
+                 syntax_error(4);
+                courant=next_token();
+             }
+         }
+       else
+            match(ID);
+  }
+}
+
+void expression()
+{
+  token t=courant;
+  /* <expr> ::= <prim> { <add op> <prim> } */
+  prim();
+  for(t = courant;  t==PLUSOP || t==MINUSOP; t = courant)
+  {
+    add_op();
+    prim();
+  }
+}
+
+
+void expr_list()
+{
+  /* <expr_list> ::= <expr> { , <expr> } */
+  if(courant==COMMA ||courant==RPAREN) syntax_error(-1);
+  else expression();
+   while (courant == COMMA)
+  {
+    match(COMMA);
+    if(courant==COMMA || courant==RPAREN)
+        syntax_error(-1);
+    else
+        expression();
+  }
+}
+
+int add_op()
+{
+  /* <add_opp> ::= PLUSOP || MINUSOP */
+  token t = courant;
+  if (t == PLUSOP || t ==MINUSOP) match(t);
+  else syntax_error(t);
+}
+</file>
+
+<file path="parser.h">
+#include <stdio.h>
+#include<stdlib.h>
+
+// ---------- Unites Lexicales
+typedef enum enu
+{
+	BEGIN, END, READ, WRITE, ID, INTLITERAL, LPAREN, RPAREN,
+	SEMICOLON, COMMA, ASSIGNOP, PLUSOP, MINUSOP, SCANEOF,FLOATLITERAL
+}token;
+
+char tokens[15][13];
+
+void system_goal();
+void program();
+void match(token t);
+token next_token();
+void syntax_error(token t );
+void inst_list();
+void inst();
+void prim();
+void id_list();
+void expression();
+void expr_list();
+int add_op();
+</file>
+
+<file path="sortie_analyseur.txt">
+BEGIN 
+WRITE LPAREN ID COMMA LPAREN INTLITERAL PLUSOP FLOATLITERAL RPAREN COMMA RPAREN SEMICOLON 
+READ ID RPAREN SEMICOLON 
+ID FLOATLITERAL PLUSOP LPAREN INTLITERAL MINUSOP INTLITERAL 
+WRITE LPAREN LPAREN ID RPAREN COMMA COMMA COMMA RPAREN SEMICOLON 
+ID ASSIGNOP SEMICOLON 
+READ LPAREN ID COMMA ID COMMA COMMA RPAREN SEMICOLON 
+WRITE LPAREN LPAREN INTLITERAL PLUSOP INTLITERAL RPAREN MINUSOP INTLITERAL COMMA ASSIGNOP COMMA INTLITERAL RPAREN SEMICOLON 
+WRITE LPAREN PLUSOP PLUSOP COMMA ID PLUSOP ID RPAREN SEMICOLON 
+READ LPAREN ID COMMA ID SEMICOLON 
+READ LPAREN ID COMMA COMMA COMMA ID RPAREN 
+WRITE LPAREN ASSIGNOP COMMA INTLITERAL PLUSOP INTLITERAL RPAREN SEMICOLON 
+ID SEMICOLON 
+ID ASSIGNOP INTLITERAL ASSIGNOP INTLITERAL SEMICOLON 
+SCANEOF
+</file>
+
+<file path="TP_TP_TP.depend">
+# depslib dependency file v1.0
+1604543609 source:c:\users\lenovo\desktop\tp_tp_tp\main.c
+	<stdio.h>
+	<stdlib.h>
+	<ctype.h>
+	"parser.h"
+
+1604543895 c:\users\lenovo\desktop\tp_tp_tp\parser.h
+	<stdio.h>
+	<stdlib.h>
+
+1604543859 source:c:\users\lenovo\desktop\tp_tp_tp\parser.c
+	"parser.h"
+
+1604544681 source:c:\users\lenovo\desktop\tp_a_lexical\main.c
+	<stdio.h>
+	<stdlib.h>
+	<ctype.h>
+	"parser.h"
+
+1604547770 c:\users\lenovo\desktop\tp_a_lexical\parser.h
+	<stdio.h>
+	<stdlib.h>
+
+1604561642 source:c:\users\lenovo\desktop\tp_a_lexical\parser.c
+	"parser.h"
+
+1604544681 source:c:\users\lenovo\desktop\2passes_tp_a_lexical\main.c
+	<stdio.h>
+	<stdlib.h>
+	<ctype.h>
+	"parser.h"
+
+1604547770 c:\users\lenovo\desktop\2passes_tp_a_lexical\parser.h
+	<stdio.h>
+	<stdlib.h>
+
+1604972534 source:c:\users\lenovo\desktop\2passes_tp_a_lexical\parser.c
+	"parser.h"
+</file>
+
+<file path="TP_TP_TP.layout">
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_layout_file>
+	<FileVersion major="1" minor="0" />
+	<ActiveTarget name="Debug" />
+	<File name="parser.h" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="363" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="main.c" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5358" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="parser.c" open="1" top="1" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="3946" topLine="172" />
+		</Cursor>
+	</File>
+</CodeBlocks_layout_file>
+</file>
+
+<file path="TP.cbp">
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="TP_TP_TP" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/TP_TP_TP" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/TP_TP_TP" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="parser.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="parser.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
+</file>
+
+<file path="TP.depend">
+# depslib dependency file v1.0
+1604544681 source:c:\users\lenovo\desktop\2nd ilisi\compilation\tp2\2passes_tp_a_lexical_ikram\main.c
+	<stdio.h>
+	<stdlib.h>
+	<ctype.h>
+	"parser.h"
+
+1604547770 c:\users\lenovo\desktop\2nd ilisi\compilation\tp2\2passes_tp_a_lexical_ikram\parser.h
+	<stdio.h>
+	<stdlib.h>
+
+1604972534 source:c:\users\lenovo\desktop\2nd ilisi\compilation\tp2\2passes_tp_a_lexical_ikram\parser.c
+	"parser.h"
+</file>
+
+<file path="TP.layout">
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_layout_file>
+	<FileVersion major="1" minor="0" />
+	<ActiveTarget name="Debug" />
+	<File name="main.c" open="1" top="1" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="298" topLine="0" />
+		</Cursor>
+	</File>
+</CodeBlocks_layout_file>
+</file>
+
+</files>
